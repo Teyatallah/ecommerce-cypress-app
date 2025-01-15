@@ -15,6 +15,7 @@ interface CartContextType {
   addToCart: (product: any) => void;
   removeFromCart: (productId: number) => void;
   clearCart: () => void;
+  updateQuantity: (productId: number, quantity: number) => void;
   itemsCount: number;
 }
 
@@ -67,6 +68,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const updateQuantity = (productId: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+
+    setItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === productId ? { ...item, quantity: newQuantity } : item
+      )
+    );
+  };
+
   const clearCart = () => {
     setItems([]);
     localStorage.removeItem("cart");
@@ -79,6 +90,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         addToCart,
         removeFromCart,
         clearCart,
+        updateQuantity,
         itemsCount: items.reduce((total, item) => total + item.quantity, 0),
       }}
     >

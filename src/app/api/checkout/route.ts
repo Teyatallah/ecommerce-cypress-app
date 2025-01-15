@@ -1,3 +1,4 @@
+// src/app/api/checkout/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
@@ -5,11 +6,13 @@ import { getUser } from "@/lib/auth";
 export async function POST(request: Request) {
   try {
     const user = await getUser();
+
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { items, shippingDetails, total } = await request.json();
+    const { items, shippingDetails, paymentMethod, total } =
+      await request.json();
 
     // Create order in database
     const order = await prisma.order.create({
@@ -25,7 +28,10 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ orderId: order.id });
+    return NextResponse.json({
+      success: true,
+      orderId: order.id,
+    });
   } catch (error) {
     console.error("Checkout error:", error);
     return NextResponse.json({ error: "Checkout failed" }, { status: 500 });

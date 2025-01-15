@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "name": "Classic Pearl Earrings",
+    "price": 99.99,
+    "category": {
+      "id": 1,
+      "name": "Stud Earrings"
+    },
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+]

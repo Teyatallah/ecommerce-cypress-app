@@ -1,36 +1,38 @@
+// src/app/checkout/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import PaymentMethodSection from "@/components/checkout/PaymentMethodSection";
+import ShippingForm from "@/components/checkout/ShippingForm";
+import OrderSummary from "@/components/checkout/OrderSummary";
 
-const europeanCountries = [
-  "France",
-  "Germany",
-  "Italy",
-  "Spain",
-  "Belgium",
-  "Netherlands",
-  "Portugal",
-  "Greece",
-  "Sweden",
-  "Denmark",
-  "Finland",
-  "Ireland",
-  "Austria",
-  "Poland",
-  "Czech Republic",
-  "Slovakia",
-  "Hungary",
-];
+export type PaymentMethod = "card" | "paypal" | "cod";
 
-interface FormErrors {
+export interface FormData {
+  name: string;
+  email: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  paymentMethod: PaymentMethod;
+  cardNumber?: string;
+  expiryDate?: string;
+  cvv?: string;
+}
+
+export interface FormErrors {
   name?: string;
   email?: string;
   address?: string;
   city?: string;
   postalCode?: string;
+  cardNumber?: string;
+  expiryDate?: string;
+  cvv?: string;
 }
 
 export default function CheckoutPage() {
@@ -39,46 +41,91 @@ export default function CheckoutPage() {
   const { user, isLoading } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
     address: "",
     city: "",
     postalCode: "",
     country: "France",
+    paymentMethod: "card",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
   });
 
-  // Only redirect if not authenticated
+  // Redirect if not authenticated
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/login?redirect=/checkout");
     }
   }, [user, isLoading, router]);
 
+  // Redirect if cart is empty
+  useEffect(() => {
+    if (items.length === 0) {
+      router.push("/cart");
+    }
+  }, [items, router]);
+
   const validateField = (name: string, value: string): string => {
     switch (name) {
       case "name":
+        if (!value) return "Name is required";
         if (value.length > 50) return "Name must be less than 50 characters";
         if (value.length < 2) return "Name is too short";
         break;
       case "email":
+        if (!value) return "Email is required";
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value))
           return "Please enter a valid email address";
         break;
       case "address":
+        if (!value) return "Address is required";
         if (value.length > 100)
           return "Address must be less than 100 characters";
         if (value.length < 5) return "Address is too short";
         break;
       case "city":
+        if (!value) return "City is required";
         if (value.length > 50) return "City must be less than 50 characters";
         if (value.length < 2) return "City name is too short";
         break;
       case "postalCode":
+        if (!value) return "Postal code is required";
         const postalCodeRegex = /^\d{5}$/;
         if (!postalCodeRegex.test(value))
           return "Postal code must be exactly 5 numbers";
+        break;
+      case "cardNumber":
+        if (formData.paymentMethod === "card") {
+          if (!value) return "Card number is required";
+          const cardNumberRegex = /^\d{16}$/;
+          if (!cardNumberRegex.test(value))
+            return "Card number must be 16 digits";
+        }
+        break;
+      case "expiryDate":
+        if (formData.paymentMethod === "card") {
+          if (!value) return "Expiry date is required";
+          const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+          if (!expiryRegex.test(value))
+            return "Expiry date must be in MM/YY format";
+          else {
+            // Check if card is expired
+            const [month, year] = value.split("/");
+            const expiry = new Date(2000 + parseInt(year), parseInt(month) - 1);
+            if (expiry < new Date()) return "Card has expired";
+          }
+        }
+        break;
+      case "cvv":
+        if (formData.paymentMethod === "card") {
+          if (!value) return "CVV is required";
+          const cvvRegex = /^\d{3}$/;
+          if (!cvvRegex.test(value)) return "CVV must be 3 digits";
+        }
         break;
     }
     return "";
@@ -88,7 +135,29 @@ export default function CheckoutPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Format card number
+    if (name === "cardNumber") {
+      const formatted = value.replace(/\D/g, "").slice(0, 16);
+      setFormData((prev) => ({ ...prev, cardNumber: formatted }));
+    }
+    // Format expiry date
+    else if (name === "expiryDate") {
+      let formatted = value.replace(/\D/g, "");
+      if (formatted.length >= 2) {
+        formatted = formatted.slice(0, 2) + "/" + formatted.slice(2, 4);
+      }
+      setFormData((prev) => ({ ...prev, expiryDate: formatted }));
+    }
+    // Format CVV
+    else if (name === "cvv") {
+      const formatted = value.replace(/\D/g, "").slice(0, 3);
+      setFormData((prev) => ({ ...prev, cvv: formatted }));
+    }
+    // Handle other fields normally
+    else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
 
     const error = validateField(name, value);
     setErrors((prev) => ({
@@ -101,32 +170,45 @@ export default function CheckoutPage() {
     const newErrors: FormErrors = {};
     let isValid = true;
 
-    Object.keys(formData).forEach((key) => {
-      if (key !== "country") {
-        const error = validateField(
-          key,
-          formData[key as keyof typeof formData]
-        );
-        if (error) {
-          newErrors[key as keyof FormErrors] = error;
-          isValid = false;
-        }
+    // Always validate shipping fields
+    ["name", "email", "address", "city", "postalCode"].forEach((field) => {
+      const error = validateField(
+        field,
+        formData[field as keyof FormData] || ""
+      );
+      if (error) {
+        newErrors[field as keyof FormErrors] = error;
+        isValid = false;
       }
     });
+
+    // Validate card fields only if card payment is selected
+    if (formData.paymentMethod === "card") {
+      ["cardNumber", "expiryDate", "cvv"].forEach((field) => {
+        const error = validateField(
+          field,
+          formData[field as keyof FormData] || ""
+        );
+        if (error) {
+          newErrors[field as keyof FormErrors] = error;
+          isValid = false;
+        }
+      });
+    }
 
     setErrors(newErrors);
     return isValid;
   };
 
-  const total = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
+      // Scroll to first error
+      const firstError = document.querySelector(".text-red-500");
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
 
@@ -141,21 +223,22 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items,
           shippingDetails: formData,
+          paymentMethod: formData.paymentMethod,
           total,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Checkout failed");
-      }
+      const data = await response.json();
 
-      const { orderId } = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Checkout failed");
+      }
 
       // Clear cart first
       clearCart();
 
-      // Use replace instead of push to prevent back navigation
-      router.replace(`/checkout/confirmation?orderId=${orderId}`);
+      // Navigate to confirmation page
+      router.replace(`/checkout/confirmation?orderId=${data.orderId}`);
     } catch (error) {
       console.error("Checkout error:", error);
       alert("Checkout failed. Please try again.");
@@ -164,12 +247,14 @@ export default function CheckoutPage() {
     }
   };
 
+  const total = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
   if (isLoading || !user) {
     return <div>Loading...</div>;
   }
-
-  // Remove the cart empty check here
-  // Let the useEffect handle the redirection
 
   return (
     <div className="max-w-4xl mx-auto py-8">
@@ -177,115 +262,18 @@ export default function CheckoutPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <h2 className="text-xl font-semibold text-rose-800 mb-4">
-            Shipping Details
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-rose-700 mb-1">
-                Full Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 text-gray-600 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-                placeholder="Enter your full name"
-              />
-              {errors.name && (
-                <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-              )}
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <ShippingForm
+              formData={formData}
+              errors={errors}
+              onChange={handleInputChange}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-rose-700 mb-1">
-                Email
-              </label>
-              <input
-                type="text"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 text-gray-600 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-                placeholder="your@email.com"
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-rose-700 mb-1">
-                Address
-              </label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 text-gray-600 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-                placeholder="Enter your street address"
-              />
-              {errors.address && (
-                <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-rose-700 mb-1">
-                  City
-                </label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 text-gray-600 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-                  placeholder="Enter city"
-                />
-                {errors.city && (
-                  <p className="text-red-500 text-sm mt-1">{errors.city}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-rose-700 mb-1">
-                  Postal Code
-                </label>
-                <input
-                  type="text"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 text-gray-600 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-                  placeholder="12345"
-                />
-                {errors.postalCode && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.postalCode}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-rose-700 mb-1">
-                Country
-              </label>
-              <select
-                name="country"
-                value={formData.country}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 text-gray-600 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-              >
-                {europeanCountries.map((country) => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PaymentMethodSection
+              formData={formData}
+              errors={errors}
+              onChange={handleInputChange}
+            />
 
             <button
               type="submit"
@@ -299,31 +287,7 @@ export default function CheckoutPage() {
           </form>
         </div>
 
-        {/* Order Summary - remains the same */}
-        <div>
-          <h2 className="text-xl font-semibold text-rose-800 mb-4">
-            Order Summary
-          </h2>
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex justify-between py-2 border-b border-rose-100"
-              >
-                <span className="text-rose-700">
-                  {item.name} x {item.quantity}
-                </span>
-                <span className="text-rose-900 font-medium">
-                  ${(item.price * item.quantity).toFixed(2)}
-                </span>
-              </div>
-            ))}
-            <div className="flex justify-between pt-4 font-bold">
-              <span className="text-rose-800">Total</span>
-              <span className="text-rose-900">${total.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
+        <OrderSummary items={items} total={total} />
       </div>
     </div>
   );

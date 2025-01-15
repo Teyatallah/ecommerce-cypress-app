@@ -1,24 +1,41 @@
 "use client";
 
 import Image from "next/image";
-import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/context/CartContext";
+import { useState } from "react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 
 export default function CartPage() {
-  const { items, removeFromCart, itemsCount } = useCart();
   const router = useRouter();
+  const { items, removeFromCart, updateQuantity } = useCart();
+  const [updating, setUpdating] = useState<number | null>(null);
+
   const total = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  if (itemsCount === 0) {
+  const handleQuantityChange = async (
+    productId: number,
+    newQuantity: number
+  ) => {
+    if (newQuantity < 1) return;
+    setUpdating(productId);
+    try {
+      await updateQuantity(productId, newQuantity);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  if (items.length === 0) {
     return (
-      <div className="text-center py-16">
+      <div className="max-w-2xl mx-auto py-16 text-center">
         <h2 className="text-2xl font-bold text-rose-900 mb-4">
           Your Cart is Empty
         </h2>
-        <p className="text-rose-700 mb-8">
+        <p className="text-rose-600 mb-8">
           Start shopping to add items to your cart.
         </p>
         <button
@@ -43,7 +60,7 @@ export default function CartPage() {
           >
             <div className="relative w-20 h-20">
               <Image
-                src={item.image}
+                src={`/earings/${(item.id % 5) + 1}.png`}
                 alt={item.name}
                 fill
                 className="object-cover rounded"
@@ -52,15 +69,34 @@ export default function CartPage() {
 
             <div className="flex-1">
               <h3 className="font-semibold text-rose-900">{item.name}</h3>
-              <p className="text-rose-600">Quantity: {item.quantity}</p>
-              <p className="text-rose-800">${item.price.toFixed(2)}</p>
+              <p className="text-rose-600">${item.price.toFixed(2)}</p>
+            </div>
+
+            <div className="flex items-center gap-2 text-black">
+              <button
+                onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                disabled={updating === item.id}
+                className="p-1 rounded-full hover:bg-rose-100"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+
+              <span className="w-12 text-center">{item.quantity}</span>
+
+              <button
+                onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                disabled={updating === item.id}
+                className="p-1 rounded-full hover:bg-rose-100"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
 
             <button
               onClick={() => removeFromCart(item.id)}
-              className="text-rose-500 hover:text-rose-700"
+              className="p-2 text-rose-500 hover:text-rose-700 transition-colors"
             >
-              Remove
+              <Trash2 className="w-5 h-5" />
             </button>
           </div>
         ))}

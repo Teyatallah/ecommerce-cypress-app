@@ -1,0 +1,19 @@
+{
+  "orders": [
+    {
+      "id": 1,
+      "status": "completed",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "items": [
+        {
+          "id": 1,
+          "quantity": 2,
+          "product": {
+            "name": "Classic Pearl Earrings",
+            "price": 99.99
+          }
+        }
+      ]
+    }
+  ]
+}
