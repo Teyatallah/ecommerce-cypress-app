@@ -204,7 +204,6 @@ export default function CheckoutPage() {
     e.preventDefault();
 
     if (!validateForm()) {
-      // Scroll to first error
       const firstError = document.querySelector(".text-red-500");
       if (firstError) {
         firstError.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -234,11 +233,19 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Checkout failed");
       }
 
-      // Clear cart first
+      // Store the orderId before clearing cart
+      const orderId = data.orderId;
+
+      // Disable the cart empty redirect temporarily
+      const ignoreCartEmpty = true;
+
+      // Clear cart
       clearCart();
 
-      // Navigate to confirmation page
-      router.replace(`/checkout/confirmation?orderId=${data.orderId}`);
+      // Using router.push with a slight delay to ensure state updates complete
+      setTimeout(() => {
+        router.push(`/checkout/confirmation?orderId=${orderId}`);
+      }, 1);
     } catch (error) {
       console.error("Checkout error:", error);
       alert("Checkout failed. Please try again.");
@@ -246,6 +253,13 @@ export default function CheckoutPage() {
       setIsProcessing(false);
     }
   };
+
+  // Modify the cart empty check to not redirect during checkout
+  useEffect(() => {
+    if (items.length === 0 && !isProcessing) {
+      router.push("/cart");
+    }
+  }, [items, router, isProcessing]);
 
   const total = items.reduce(
     (sum, item) => sum + item.price * item.quantity,

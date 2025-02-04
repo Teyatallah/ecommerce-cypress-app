@@ -77,6 +77,7 @@ export default function CartPage() {
                 onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                 disabled={updating === item.id}
                 className="p-1 rounded-full hover:bg-rose-100"
+                data-testid="decrease-quantity"
               >
                 <Minus className="w-4 h-4" />
               </button>
@@ -87,6 +88,7 @@ export default function CartPage() {
                 onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                 disabled={updating === item.id}
                 className="p-1 rounded-full hover:bg-rose-100"
+                data-testid="increase-quantity"
               >
                 <Plus className="w-4 h-4" />
               </button>

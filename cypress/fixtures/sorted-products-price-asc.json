@@ -1,5 +1,13 @@
 [
   {
+    "id": 3,
+    "name": "Amber Drops",
+    "price": 79.99,
+    "category": {
+      "name": "Drop Earrings"
+    }
+  },
+  {
     "id": 1,
     "name": "Classic Pearl Earrings",
     "price": 99.99,
@@ -13,14 +21,6 @@
     "price": 149.99,
     "category": {
       "name": "Hoop Earrings"
-    }
-  },
-  {
-    "id": 3,
-    "name": "Amber Drops",
-    "price": 79.99,
-    "category": {
-      "name": "Drop Earrings"
     }
   }
 ]

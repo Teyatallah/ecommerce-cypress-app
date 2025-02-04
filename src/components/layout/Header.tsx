@@ -1,3 +1,4 @@
+// src/components/layout/Header.tsx
 "use client";
 
 import Link from "next/link";
@@ -30,7 +31,10 @@ export default function Header() {
               <div className="flex items-center gap-1">
                 <ShoppingCart className="w-6 h-6 group-hover:text-rose-900" />
                 {itemsCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                  <span
+                    data-testid="cart-count"
+                    className="absolute -top-2 -right-2 bg-rose-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center"
+                  >
                     {itemsCount}
                   </span>
                 )}

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
-import { useNotification } from "@/context/NotificationContext";
+import toast from "react-hot-toast";
 
 interface Product {
   id: number;
@@ -23,22 +23,30 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const { addToCart } = useCart();
-  const { addNotification } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
 
   const imageNumber = (product.id % 5) + 1;
   const imagePath = `/earings/${imageNumber}.png`;
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsLoading(true);
 
     try {
       addToCart(product);
-      addNotification(`✅ Added "${product.name}" to cart`);
+      toast.success(`${product.name} added to cart!`, {
+        className: "custom-toast",
+        style: {
+          background: "#f43f5e",
+          color: "#fff",
+        },
+        iconTheme: {
+          primary: "#fff",
+          secondary: "#f43f5e",
+        },
+      });
     } catch (error) {
-      console.error("Failed to add to cart:", error);
-      addNotification("❌ Failed to add item to cart");
+      toast.error("Failed to add to cart");
     } finally {
       setIsLoading(false);
     }

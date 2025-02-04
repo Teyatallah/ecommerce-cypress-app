@@ -81,6 +81,7 @@ export default function ProfilePage() {
               <div
                 key={order.id}
                 className="border border-rose-100 rounded-lg p-4"
+                data-cy="order-item"
               >
                 <div className="flex justify-between items-center mb-4">
                   <div>
