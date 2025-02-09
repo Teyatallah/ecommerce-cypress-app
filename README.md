@@ -27,23 +27,28 @@ Pour configurer et exécuter ce projet sur votre machine locale, suivez les éta
 1. **Cloner le projet** : Commencez par cloner le dépôt Git sur votre machine.
    ```bash
    git clone git@github.com:Teyatallah/ecommerce-cypress-app.git
+   ```
 
-2. **Mettre à jour la branche dev** : Assurez-vous d'être sur la branche dev et de récupérer les dernières mises à jour.
+2. **Mettre à jour la branche develop** : Assurez-vous d'être sur la branche develop et de récupérer les dernières mises à jour.
    ```bash
-  git checkout dev
-  git pull origin dev
+  git checkout develop
+  git pull origin develop
+  ```
 
 3. **Installer les dépendances** :Utilisez npm pour installer toutes les dépendances nécessaires.
    ```bash
   npm install
+  ```
 
 4. **Démarrer les services avec Docker** :Utilisez Docker Compose pour lancer les services nécessaires.
    ```bash
   docker-compose up
+  ```
 
 5. **Lancer l'application** :Enfin, Démarrez l'application.
    ```bash
   npm run dev
+  ```
 
 ---
 
