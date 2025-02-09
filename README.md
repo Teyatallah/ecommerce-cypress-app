@@ -24,31 +24,31 @@ Dans le cadre de ma formation en tests logiciels, j'ai développé un projet vis
 ## 2. Configuration du Projet
 Pour configurer et exécuter ce projet sur votre machine locale, suivez les étapes suivantes :
 
-1. **Cloner le projet** : Commencez par cloner le dépôt Git sur votre machine.
+1. **Cloner le projet** : Clonez le dépôt Git sur votre machine.
    ```bash
    git clone git@github.com:Teyatallah/ecommerce-cypress-app.git
    ```
 
-2. **Mettre à jour la branche develop** : Assurez-vous d'être sur la branche develop et de récupérer les dernières mises à jour.
+2. **Mettre à jour la branche `develop`** : Assurez-vous d'être sur la branche `develop` et de récupérer les dernières mises à jour.
    ```bash
-  git checkout develop
-  git pull origin develop
-  ```
+   git checkout develop
+   git pull origin develop
+   ```
 
-3. **Installer les dépendances** :Utilisez npm pour installer toutes les dépendances nécessaires.
+3. **Installer les dépendances** : Utilisez npm pour installer toutes les dépendances nécessaires.
    ```bash
-  npm install
-  ```
+   npm install
+   ```
 
-4. **Démarrer les services avec Docker** :Utilisez Docker Compose pour lancer les services nécessaires.
+4. **Démarrer les services avec Docker** : Utilisez Docker Compose pour lancer les services nécessaires.
    ```bash
-  docker-compose up
-  ```
+   docker-compose up -d
+   ```
 
-5. **Lancer l'application** :Enfin, Démarrez l'application.
+5. **Lancer l'application** : Démarrez l'application.
    ```bash
-  npm run dev
-  ```
+   npm run dev
+   ```
 
 ---
 
