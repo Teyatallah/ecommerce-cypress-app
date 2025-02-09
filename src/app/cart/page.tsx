@@ -29,6 +29,10 @@ export default function CartPage() {
     }
   };
 
+  const handleEmptyCart = () => {
+    items.forEach((item) => removeFromCart(item.id));
+  };
+
   if (items.length === 0) {
     return (
       <div className="max-w-2xl mx-auto py-16 text-center">
@@ -50,7 +54,16 @@ export default function CartPage() {
 
   return (
     <div className="max-w-2xl mx-auto py-8">
-      <h1 className="text-2xl font-bold text-rose-900 mb-8">Shopping Cart</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold text-rose-900">Shopping Cart</h1>
+        <button
+          onClick={handleEmptyCart}
+          className="text-rose-500 hover:text-rose-700 transition-colors flex items-center gap-2 px-3 py-2 rounded-lg border border-rose-200 hover:border-rose-300"
+        >
+          <Trash2 className="w-4 h-4" />
+          Empty Cart
+        </button>
+      </div>
 
       <div className="space-y-4">
         {items.map((item) => (
