@@ -38,4 +38,42 @@ describe("Authentication", () => {
     cy.wait("@loginRequest");
     cy.contains("Invalid credentials").should("be.visible");
   });
-});
+
+  it("should show error message with incorrect email", () => {
+    cy.intercept("POST", "/api/auth/login", {
+      statusCode: 401,
+      body: { error: "Invalid credentials" },
+    }).as("loginRequest");
+
+    cy.visit("/login");
+
+    cy.get('input[type="email"]').type("wrong@example.com");
+    cy.get('input[type="password"]').type("password123");
+    cy.get('button[type="submit"]').click();
+
+    cy.wait("@loginRequest");
+    cy.contains("Invalid credentials").should("be.visible");
+  });
+
+  it("should show error message with incorrect password", () => {
+    cy.intercept("POST", "/api/auth/login", {
+      statusCode: 401,
+      body: { error: "Invalid credentials" },
+    }).as("loginRequest");
+
+    cy.visit("/login");
+
+    cy.get('input[type="email"]').type("test@example.com");
+    cy.get('input[type="password"]').type("password123");
+    cy.get('button[type="submit"]').click();
+
+    cy.wait("@loginRequest");
+    cy.contains("Invalid credentials").should("be.visible");
+  });
+
+})
+
+
+
+//Vérifier le comportement avec un format de email non valide
+//Connexion sans remplir les champs: Vérifier la validation des champs obligatoires
